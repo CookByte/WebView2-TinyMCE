@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html style="overflow: hidden;">
+<head>
+    <script src='tinymce.min.js'></script> 
+    <!-- <script src="langs/zh_CN.js"></script> -->
+    <script type="text/javascript">
+      tinymce.init({
+        // mode : "exact",
+        // elements : "mytextarea",
+        selector: '#mytextarea',        
+        // language: 'zh_CN',
+        menubar: false,  //不想要文件那一栏
+        // toolbar: false, //不想要加粗那一栏
+        promotion: false,  //去掉右上角⚡️Upgrade更新提醒按钮
+        resize:true,  //右下角有一个拖动标记，true（仅允许改变高度）, false（完全不让你动）, 'both'（宽高都能改变，注意引号）
+        // width: 300,  //默认宽度，单位为像素（px）
+        // height: 300,  //默认高度
+        // statusbar: false  //隐藏状态栏，指的是编辑器最底下、左侧显示dom信息、右侧显示Tiny版权链接和调整大小的那一行。
+        branding: false,  //设为false时，隐藏编辑器界面右下角的“Powered by Tiny”（官方汉化为：由Tiny驱动）字样。(状态栏右侧)
+      });
+
+      setInterval(() => {
+        const formHeight = document.querySelector('#idcardmsg').value;
+        document.querySelector('#idcardmsg2').value = formHeight;
+        // 使用最新 formHeight 设置TinyMCE编辑框的高度
+        // tinymce.activeEditor.editorContainer.style.height = (formHeight -400) + 'px';   //动态更新编辑器的高度，公式可以按需调整，目的是确保底部“提交”按钮在合适的位置（非实时，若需要实时调整编辑器高度，可以注释掉此处代码，然后启用C#代码倒数第2行。这里只是展示一个方法）
+      }, 300);  //300毫秒
+
+    </script>
+
+</head>
+<body >
+  <div>
+    输入框1<textarea id="idcardmsg">abc</textarea>（窗体大小调整时，会把窗体高度值更新到这里 ——实时更新）
+    </br>
+    输入框2<textarea id="idcardmsg2"></textarea>（=输入框1的值，自动更新 ——非实时更新，快速调整窗口高度时可以看出效果差异）
+  </div>
+  <div>
+    <button onclick="test1()">测试弹出框</button>(读取输入框1的值传递给C#进行winform弹窗)
+    </br>
+    <button onclick="test2()">读取信息</button>(读取C#定义的参数值，然后进行js弹窗)
+  </div>
+  <div>
+    <button onclick="callCsharp1()">提交1</button>（输入2个值，先winform弹窗提示输入的信息，然后再由ExecuteScriptAsync方法执行js弹窗显示结果
+    </br>
+    <button onclick="callCsharp2()">提交2</button>（最基本的js弹窗，没有前后端的交互传值）
+    </br>
+    <button onclick="callCsharp3()">提交3</button>（给C#传一个值，然后使用ExecuteScriptAsync方法执行js函数进行弹窗新值，同时修改输入框1的值
+  </div>
+  <h1>TinyMCE快速开始示例</h1>
+  <form id="myForm" method="post">
+    <textarea id="mytextarea" name="TextAreaContent">Hello, World!（TinyMCE编辑器）
+      </br>①右上角3个按钮是winform button，可以触发调用js函数；
+      </br>②当窗口大小变更时，TinyMCE编辑器尺寸也会变更。</textarea>
+    <!-- //button放在form里面，如果不加“;return false;”，点击提交后会清空数据。也可以放在外面（见下面第3行注释部分） -->
+    <button onclick="formSubmit();return false;" type="submit" >提交</button>
+  </form>
+  <!-- <button onclick="formSubmit()" >提交</button>  -->
+  
+  <script>
+
+    //1、C#调用JS
+    var jsVar = '123';
+    function ShowMessage() {
+    alert('调用Js' + jsVar);
+    };
+    function ShowMessageArg(arg) {
+    alert('【网页消息框】' + arg);
+    };
+    function GetData_js(arg) {
+    return '【网页返回值】:' + arg;
+    };
+
+    //2、JS调用C#
+    var hostObject = window.chrome.webview.hostObjects.customHost;  //定义对象customHost，方便js函数调用
+
+    function test1() {
+      var idcardmsg = document.getElementById("idcardmsg").value;
+      hostObject.ShowMessageArg(idcardmsg);
+    };
+    
+    function test2() {
+      var result = hostObject.str_123();  //这里调用的是无返回值的函数，由C#的ExecuteScriptAsync方法实现执行js指令进行弹窗
+      // var result_2 = hostObject.str_abc();  //这里调用的有返回值的函数，未成功
+      // alert("获取c#属性之后的js弹窗："+result_2);  //直接这么执行会提示：function () { [native code] }
+    };
+
+    function formSubmit() {
+        // var msg_content = document.getElementById("mytextarea").value;  //这个原生方法，获取的编辑框原值，不是编辑器最新值
+        // var msg_content = tinyMCE.activeEditor.getContent();  //这个是编辑器方法，获取的是带有<p>的HTML格式内容
+        // 编辑器方法获取不带HTML标记的纯文本内容：
+        var activeEditor = tinymce.activeEditor;
+        var editBody = activeEditor.getBody();
+        activeEditor.selection.select(editBody);
+        var msg_content = activeEditor.selection.getContent( { 'format' : 'text' } );
+        var msg_alert = "\n提交成功，内容是："+ msg_content;
+        hostObject.ShowMessageArg(msg_alert);
+        // return false;
+    };
+
+    //3、js调用c#
+    function callCsharp1() {
+      //获取主机对象
+      var num1 = parseInt(prompt("请输入第1个数字","0"));
+      var num2 = parseInt(prompt("请输入第2个数字","0"));
+      hostObject.TestCalcAddByCsharpMethod(num1,num2,"加法计算");
+    };
+
+    function callCsharp2() {
+      alert("js弹窗");
+    };
+
+    async function callCsharp3() {
+      hostObject.GetData_cs("shoufa");
+    };
+  
+  </script>
+</body>
+</html>
