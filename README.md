@@ -12,4 +12,5 @@
 ![image](https://github.com/CookByte/WebView2-TinyMCE/assets/16180316/cfe9a44d-ea9d-4aaa-acc3-1545517f3909)
 
 ### 2. 提示
-给Winform设计界面的窗口属性绑定SizeChanged事件。
+- 给Winform设计界面的窗口属性绑定SizeChanged事件。
+- 详细使用文档可以参考：https://zhuanlan.zhihu.com/p/628397884
